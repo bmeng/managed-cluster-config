@@ -20,16 +20,21 @@ endif
 ifndef GEN_TEMPLATE
 $(error GEN_TEMPLATE is not set; check project.mk file)
 endif
-ifndef GEN_POLICY
-$(error GEN_POLICY is not set; check project.mk file)
+ifndef GEN_HCP_POLICY
+$(error GEN_HCP_POLICY is not set; check project.mk file)
 endif
-ifndef GEN_POLICY_CONFIG
-$(error GEN_POLICY_CONFIG is not set; check project.mk file)
+ifndef GEN_HCP_POLICY_CONFIG
+$(error GEN_HCP_POLICY_CONFIG is not set; check project.mk file)
 endif
-ifndef GEN_POLICY_CONFIG_SP
-$(error GEN_POLICY_CONFIG_SP is not set; check project.mk file)
+ifndef GEN_HOSTED_POLICY_CONFIG_SP
+$(error GEN_HOSTED_POLICY_CONFIG_SP is not set; check project.mk file)
 endif
-
+ifndef GEN_HOSTED_POLICY
+$(error GEN_HOSTED_POLICY is not set; check project.mk file)
+endif
+ifndef GEN_HOSTED_POLICY_CONFIG
+$(error GEN_HOSTED_POLICY_CONFIG is not set; check project.mk file)
+endif
 
 CONTAINER_ENGINE?=$(shell command -v docker 2>/dev/null || command -v podman 2>/dev/null)
 CONTAINER_RUN_FLAGS=--user : --rm -v `pwd -P`:`pwd -P`:z -w=`pwd` --platform linux/amd64
@@ -43,7 +48,7 @@ OC := $(CONTAINER_ENGINE) run $(CONTAINER_RUN_FLAGS) quay.io/openshift/origin-cl
 endif
 
 .PHONY: default
-default: generate-oauth-templates generate-rosa-brand-logo generate-hive-templates
+default: generate-oauth-templates generate-rosa-brand-logo generate-hcp-policies generate-hostedcluster-policies generate-hive-templates
 
 .PHONY: generate-oauth-templates
 generate-oauth-templates:
@@ -60,13 +65,28 @@ generate-rosa-brand-logo:
 	$(OC) create configmap rosa-brand-logo -n openshift-config --from-file source/html/rosa/rosa-brand-logo.svg -o yaml > deploy/rosa-console-branding-configmap/rosa-brand-logo.yaml
 
 .PHONY: generate-hive-templates
-generate-hive-templates: generate-oauth-templates
+generate-hive-templates: generate-oauth-templates generate-hostedcluster-policies generate-hcp-policies
 	if [ -z ${IN_CONTAINER} ]; then \
-		$(CONTAINER_ENGINE) run $(CONTAINER_RUN_FLAGS) registry.access.redhat.com/ubi8/python-39 /bin/bash -xc "cd `pwd -P`; pip install --disable-pip-version-check oyaml; curl -sSL https://github.com/stolostron/policy-generator-plugin/releases/download/v1.9.1/linux-amd64-PolicyGenerator --output /opt/app-root/bin/PolicyGenerator; chmod +x /opt/app-root/bin/PolicyGenerator; ${GEN_POLICY_CONFIG}; ${GEN_POLICY_CONFIG_SP}; ${GEN_POLICY}";\
 		$(CONTAINER_ENGINE) run $(CONTAINER_RUN_FLAGS) registry.access.redhat.com/ubi8/python-39 /bin/bash -xc "cd `pwd -P`; pip install --disable-pip-version-check oyaml; ${GEN_TEMPLATE}"; \
 	else \
-		${GEN_POLICY_CONFIG};\
-		${GEN_POLICY_CONFIG_SP};\
-		${GEN_POLICY};\
 		${GEN_TEMPLATE}; \
+	fi
+
+.PHONY: generate-hostedcluster-policies
+generate-hostedcluster-policies:
+	if [ -z ${IN_CONTAINER} ]; then \
+		$(CONTAINER_ENGINE) run $(CONTAINER_RUN_FLAGS) registry.access.redhat.com/ubi8/python-39 /bin/bash -xc "cd `pwd -P`; pip install --disable-pip-version-check oyaml; curl -sSL https://github.com/stolostron/policy-generator-plugin/releases/download/v1.9.1/linux-amd64-PolicyGenerator --output /opt/app-root/bin/PolicyGenerator; chmod +x /opt/app-root/bin/PolicyGenerator; ${GEN_HOSTED_POLICY_CONFIG}; ${GEN_HOSTED_POLICY_CONFIG_SP}; ${GEN_HOSTED_POLICY}";\
+	else \
+		${GEN_HOSTED_POLICY_CONFIG};\
+		${GEN_HOSTED_POLICY_CONFIG_SP};\
+		${GEN_HOSTED_POLICY};\
+	fi
+
+.PHONY: generate-hcp-policies
+generate-hcp-policies:
+	if [ -z ${IN_CONTAINER} ]; then \
+		$(CONTAINER_ENGINE) run $(CONTAINER_RUN_FLAGS) registry.access.redhat.com/ubi8/python-39 /bin/bash -xc "cd `pwd -P`; pip install --disable-pip-version-check oyaml; curl -sSL https://github.com/stolostron/policy-generator-plugin/releases/download/v1.9.1/linux-amd64-PolicyGenerator --output /opt/app-root/bin/PolicyGenerator; chmod +x /opt/app-root/bin/PolicyGenerator; ${GEN_HCP_POLICY_CONFIG}; ${GEN_HCP_POLICY}";\
+	else \
+		${GEN_HCP_POLICY_CONFIG};\
+		${GEN_HCP_POLICY};\
 	fi

@@ -61,7 +61,7 @@ def get_all_yaml_files(path):
     file_paths = sorted(file_paths, key=str.casefold)
     return file_paths
 
-policy_generator_config = './scripts/policy-generator-config.yaml'
+policy_generator_config = './scripts/policy-generator-config-hostedcluster.yaml'
 config_filename = "config.yaml"
 #go into each directory and copy a subset of manifests that are not SubjectPermissions or config.yaml into a /tmp dir
 for directory in sorted(directories, key=str.casefold):
@@ -124,7 +124,7 @@ for directory in sorted(directories, key=str.casefold):
                         manifests.append(manifest)
             #create a dir in /resources to hold the newly generated policy-generator-config.yaml
             #copy over the generator template
-            policy_generator_config = './scripts/policy-generator-config.yaml'
+            policy_generator_config = './scripts/policy-generator-config-hostedcluster.yaml'
             shutil.copy(policy_generator_config, temp_directory)
             with open(policy_generator_config,'r') as input_file:
                 policy_template = yaml.safe_load(input_file)
@@ -134,5 +134,5 @@ for directory in sorted(directories, key=str.casefold):
             for p in policy_template['policies']:
                 p['name'] =  policy_name + '-sp'
                 p['manifests'] = manifests
-            with open(os.path.join(temp_directory, "policy-generator-config.yaml"),'w+') as output_file:
+            with open(os.path.join(temp_directory, "policy-generator-config-hostedcluster"),'w+') as output_file:
                 yaml.dump(policy_template, output_file)

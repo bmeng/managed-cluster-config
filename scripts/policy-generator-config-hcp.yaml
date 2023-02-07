@@ -1,0 +1,22 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: PolicyGenerator
+metadata:
+  name: #Filled by script
+policyDefaults:
+  namespace: openshift-acm-policies
+  placement:
+    clusterSelectors:
+      hypershift.open-cluster-management.io/management-cluster: "true"
+  namespaceSelector:
+    matchLabels:
+      hypershift.openshift.io/hosted-control-plane: "true"
+  remediationAction: enforce
+  evaluationInterval:
+    compliant: 2h
+    noncompliant: 45s
+  pruneObjectBehavior: "DeleteIfCreated"
+policies:
+  - name: #Filled by script
+    manifests:
+      # NOTE to use a path, the target directory must NOT have a `config.yaml` else it is included in the policy
+      - path: #Filled by script
